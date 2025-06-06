@@ -1,5 +1,9 @@
 #!/bin/bash
 
+echo "Hello from the script!"
+date
+whoami
+
 # Get the current day of the month 
 today=$(date +%d)
 
