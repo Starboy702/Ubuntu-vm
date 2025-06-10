@@ -1,9 +1,5 @@
 #!/bin/bash
 
-echo "Hello from the script!"
-date
-whoami
-
 # Get the current day of the month 
 today=$(date +%d)
 
@@ -11,7 +7,7 @@ today=$(date +%d)
 for file in *; do
     # Will check if it's a regular file
     if [[ -f "$file" ]]; then
-        # Gets the last day of the files last modification 
+        # Gets the last day of the files last modification
         mod_day=$(date -r "$file" +%d)
 
         # Compares with today date
