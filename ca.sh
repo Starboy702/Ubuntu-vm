@@ -1,20 +1,13 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-# Initialize variables
-URL=""
-FILE=""
-GUTENBERG=false
-WORD=""
-HELP=false
-VOWEL=false
-CONSONANT=false
-PUNCTUATION=false
-DIGIT=false
-TOP_TEN=false
-LEAST_TEN=false
+# Timestamp flags
+ts=$(date +%Y-%m-%d)
+year=$(date +%Y)
+month=$(date +%m)
+day=$(date +%d)
 
-# Display help message
-function display_help {
+# Help function
+help() {
   echo "Usage: ./ca.sh [options]"
   echo "Options:"
   echo "  -h         Show this help message"
@@ -31,6 +24,20 @@ function display_help {
   echo "  -W WORD    Output the count of the specified word"
 }
 
+# Initialize variables
+URL=""
+FILE=""
+GUTENBERG=false
+COUNT_WORDS=false
+SEARCH_WORD=""
+VOWEL=false
+CONSONANT=false
+PUNCTUATION=false
+DIGIT=false
+TOP_TEN=false
+LEAST_TEN=false
+HELP=false
+
 # Check for errors and exit if any error occurs
 function check_error {
   if [[ $? -ne 0 ]]; then
@@ -42,7 +49,7 @@ function check_error {
 # Process Gutenberg file if -g option is selected
 function process_gutenberg {
   if $GUTENBERG; then
-    sed -n '/\*\*\* START OF THE PROJECT \*\*\*/,$p' | sed '/\*\*\* END OF THE PROJECT \*\*\*/,$d'
+    cat "$INPUT_FILE" | sed -n '/\*\*\* START OF THE PROJECT \*\*\*/,$p' | sed '/\*\*\* END OF THE PROJECT \*\*\*/,$d'
     check_error
   fi
 }
@@ -91,36 +98,75 @@ function least_ten {
 
 # Count specified word
 function count_word {
-  WORD_COUNT=$(grep -wo -i "$WORD" "$INPUT_FILE" | wc -l)
-  echo "\"$WORD\" count: $WORD_COUNT"
+  WORD_COUNT=$(grep -wo -i "$SEARCH_WORD" "$INPUT_FILE" | wc -l)
+  echo "\"$SEARCH_WORD\" count: $WORD_COUNT"
 }
 
-# Check command-line options
+# Parse options
+while getopts ":l:u:e:h" opt; do
+  case $opt in
+    l) lower=$OPTARG ;;
+    u) upper=$OPTARG ;;
+    e) ext=$OPTARG ;;
+    h) HELP=true ;;
+    \?) echo "Invalid Option"; exit 1 ;;
+    :) echo "Missing argument for -$OPTARG"; exit 1 ;;
+  esac
+done
+
+# Parse main options
 while getopts "hf:u:gvwcpdtTW:" opt; do
   case $opt in
-    h) HELP=true ;;
-    f) FILE="$OPTARG" ;;
-    u) URL="$OPTARG" ;;
-    g) GUTENBERG=true ;;
-    w) WORD=true ;;
-    v) VOWEL=true ;;
-    c) CONSONANT=true ;;
-    p) PUNCTUATION=true ;;
-    d) DIGIT=true ;;
-    t) TOP_TEN=true ;;
-    T) LEAST_TEN=true ;;
-    W) WORD="$OPTARG" ;;
-    *) HELP=true ;;
+    h)
+      help
+      exit 0
+      ;;
+    f)
+      FILE="$OPTARG"
+      ;;
+    u)
+      URL="$OPTARG"
+      ;;
+    g)
+      GUTENBERG=true
+      ;;
+    w)
+      COUNT_WORDS=true
+      ;;
+    v)
+      VOWEL=true
+      ;;
+    c)
+      CONSONANT=true
+      ;;
+    p)
+      PUNCTUATION=true
+      ;;
+    d)
+      DIGIT=true
+      ;;
+    t)
+      TOP_TEN=true
+      ;;
+    T)
+      LEAST_TEN=true
+      ;;
+    W)
+      SEARCH_WORD="$OPTARG"
+      ;;
+    *)
+      HELP=true
+      ;;
   esac
 done
 
 # Display help message if -h is passed
 if $HELP; then
-  display_help
+  help
   exit 0
 fi
 
-# If file is passed, read from file
+# If no input file or URL is provided, read from stdin
 if [ -n "$FILE" ]; then
   INPUT_FILE="$FILE"
 elif [ -n "$URL" ]; then
@@ -134,9 +180,9 @@ fi
 # Process Gutenberg file if -g option is set
 process_gutenberg
 
-# Perform required actions
-if $WORD; then
-  count_word
+# Perform required actions based on flags
+if $COUNT_WORDS; then
+  count_words
 fi
 if $VOWEL; then
   count_vowels
@@ -156,11 +202,13 @@ fi
 if $LEAST_TEN; then
   least_ten
 fi
-if $WORD; then
-  count_words
+if [ -n "$SEARCH_WORD" ]; then
+  count_word
 fi
 
 # Clean up if a temporary file was created
 if [ -f "$INPUT_FILE" ] && [[ "$INPUT_FILE" != "/dev/stdin" ]]; then
   rm -f "$INPUT_FILE"
 fi
+
+echo "Done"
