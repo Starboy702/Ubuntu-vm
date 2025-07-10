@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -x  # Enable debugging mode to see what's happening
 
 # Timestamp flags
 ts=$(date +%Y-%m-%d)
@@ -71,12 +72,12 @@ function count_vowels {
 
 # Count consonants
 function count_consonants {
-  echo "Consanant Count: $(grep -o -i '[bcdfghjklmnpqrstvwxyz]' "$INPUT_FILE" | wc -l)"
+  echo "Consonant Count: $(grep -o -i '[bcdfghjklmnpqrstvwxyz]' "$INPUT_FILE" | wc -l)"
 }
 
 # Count punctuation marks
 function count_punctuation {
-  echo "Punctation Count: $(grep -o '[[:punct:]]' "$INPUT_FILE" | wc -l)"
+  echo "Punctuation Count: $(grep -o '[[:punct:]]' "$INPUT_FILE" | wc -l)"
 }
 
 # Count digits
@@ -176,6 +177,9 @@ elif [ -n "$URL" ]; then
 else
   INPUT_FILE="/dev/stdin"
 fi
+
+# Debugging information
+echo "Processing file: $INPUT_FILE"
 
 # Process Gutenberg file if -g option is set
 process_gutenberg
