@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-set -x  # Enable debugging mode to see what's happening
 
 # Timestamp flags
 ts=$(date +%Y-%m-%d)
@@ -50,7 +49,7 @@ function check_error {
 # Process Gutenberg file if -g option is selected
 function process_gutenberg {
   if $GUTENBERG; then
-    cat "$INPUT_FILE" | sed -n '/\*\*\* START OF THE PROJECT \*\*\*/,$p' | sed '/\*\*\* END OF THE PROJECT \*\*\*/,$d'
+    INPUT_FILE=$(sed -n '/\*\*\* START OF THE PROJECT \*\*\*/,$p' "$INPUT_FILE" | sed '/\*\*\* END OF THE PROJECT \*\*\*/,$d')
     check_error
   fi
 }
@@ -104,18 +103,6 @@ function count_word {
 }
 
 # Parse options
-while getopts ":l:u:e:h" opt; do
-  case $opt in
-    l) lower=$OPTARG ;;
-    u) upper=$OPTARG ;;
-    e) ext=$OPTARG ;;
-    h) HELP=true ;;
-    \?) echo "Invalid Option"; exit 1 ;;
-    :) echo "Missing argument for -$OPTARG"; exit 1 ;;
-  esac
-done
-
-# Parse main options
 while getopts "hf:u:gvwcpdtTW:" opt; do
   case $opt in
     h)
@@ -178,9 +165,6 @@ else
   INPUT_FILE="/dev/stdin"
 fi
 
-# Debugging information
-echo "Processing file: $INPUT_FILE"
-
 # Process Gutenberg file if -g option is set
 process_gutenberg
 
@@ -211,8 +195,15 @@ if [ -n "$SEARCH_WORD" ]; then
 fi
 
 # Clean up if a temporary file was created
-if [ -f "$INPUT_FILE" ] && [[ "$INPUT_FILE" != "/dev/stdin" ]]; then
-  rm -f "$INPUT_FILE"
+if [ -f "$INPUT_FILE" ] && [[ "$INPUT_FILE" != "/dev/stdin" && "$FILE" != "$INPUT_FILE" ]]; then
+  echo "Do you want to delete the file? (y/n)"
+  read answer
+  if [ "$answer" == "y" ]; then
+    rm -f "$INPUT_FILE"
+    echo "File deleted."
+  else
+    echo "File not deleted."
+  fi
 fi
 
 echo "Done"
